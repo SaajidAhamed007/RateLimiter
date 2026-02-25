@@ -1,5 +1,6 @@
 package com.example.ratelimiter.filter;
 
+import com.example.ratelimiter.dto.RateLimitDecision;
 import com.example.ratelimiter.service.FixedWindowRateLimiter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,17 +23,22 @@ public class RateLimiterFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String clientIp = request.getRemoteAddr();
-        String key = "rate_limit:"+clientIp;
+        String endpoint = request.getRequestURI();
+        String key = "rl:"+clientIp+":"+endpoint;
 
-        boolean allowed = rateLimiter.isAllowed(key);
+        RateLimitDecision decision = rateLimiter.checkLimit(key);
 
-        if (!allowed) {
+        response.setHeader("X-RateLimit-Limit", String.valueOf(decision.limit()));
+        response.setHeader("X-RateLimit-Remaining", String.valueOf(decision.remaining()));
+        response.setHeader("X-RateLimit-Reset", String.valueOf(decision.resetEpochSeconds()));
+
+        if(!decision.allowed()){
             response.setStatus(429);
             response.getWriter().write("Too many requests. Please try again later.");
             return;
-        } else {
-            filterChain.doFilter(request, response);
         }
+
+        filterChain.doFilter(request, response);
     }
 
 }
