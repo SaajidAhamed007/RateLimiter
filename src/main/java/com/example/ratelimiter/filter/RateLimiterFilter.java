@@ -2,6 +2,7 @@ package com.example.ratelimiter.filter;
 
 import com.example.ratelimiter.dto.RateLimitDecision;
 import com.example.ratelimiter.service.FixedWindowRateLimiter;
+import com.example.ratelimiter.service.SlidingWindowRateLimiter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,9 +14,9 @@ import java.io.IOException;
 
 @Component
 public class RateLimiterFilter extends OncePerRequestFilter {
-    private final FixedWindowRateLimiter rateLimiter;
+    private final SlidingWindowRateLimiter rateLimiter;
 
-    public RateLimiterFilter(FixedWindowRateLimiter rateLimiter) {
+    public RateLimiterFilter(SlidingWindowRateLimiter rateLimiter) {
         this.rateLimiter = rateLimiter;
     }
 
