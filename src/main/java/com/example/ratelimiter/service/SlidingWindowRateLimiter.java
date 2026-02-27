@@ -11,14 +11,11 @@ import java.util.List;
 public class SlidingWindowRateLimiter {
     private final SlidingWindowLuaExecutor executor;
 
-    private static final int limit = 5;
-    private static final long windowSize = 60;
-
     public SlidingWindowRateLimiter(SlidingWindowLuaExecutor executor) {
         this.executor = executor;
     }
 
-    public RateLimitDecision checkLimit(String key){
+    public RateLimitDecision checkLimit(String key, long windowSize, long limit) {
         long now = Instant.now().getEpochSecond();
         List result = executor.execute(key, now, windowSize, limit);
 

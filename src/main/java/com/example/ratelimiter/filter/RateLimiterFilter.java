@@ -1,6 +1,8 @@
 package com.example.ratelimiter.filter;
 
 import com.example.ratelimiter.dto.RateLimitDecision;
+import com.example.ratelimiter.policy.PolicyResolver;
+import com.example.ratelimiter.policy.RateLimitPolicy;
 import com.example.ratelimiter.service.FixedWindowRateLimiter;
 import com.example.ratelimiter.service.SlidingWindowRateLimiter;
 import jakarta.servlet.FilterChain;
@@ -15,9 +17,11 @@ import java.io.IOException;
 @Component
 public class RateLimiterFilter extends OncePerRequestFilter {
     private final SlidingWindowRateLimiter rateLimiter;
+    private final PolicyResolver policyResolver;
 
-    public RateLimiterFilter(SlidingWindowRateLimiter rateLimiter) {
+    public RateLimiterFilter(SlidingWindowRateLimiter rateLimiter, PolicyResolver policyResolver) {
         this.rateLimiter = rateLimiter;
+        this.policyResolver = policyResolver;
     }
 
     @Override
@@ -27,7 +31,9 @@ public class RateLimiterFilter extends OncePerRequestFilter {
         String endpoint = request.getRequestURI();
         String key = "rl:"+clientIp+":"+endpoint;
 
-        RateLimitDecision decision = rateLimiter.checkLimit(key);
+        RateLimitPolicy policy = policyResolver.resolve(request);
+
+        RateLimitDecision decision = rateLimiter.checkLimit(key, policy.windowSize(), policy.limit());
 
         response.setHeader("X-RateLimit-Limit", String.valueOf(decision.limit()));
         response.setHeader("X-RateLimit-Remaining", String.valueOf(decision.remaining()));
